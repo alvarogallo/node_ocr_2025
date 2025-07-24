@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR API - Servicio de Reconocimiento de Texto</title>
+    <meta name="description" content="API de OCR para extraer texto de imágenes usando Tesseract.js. Servicio rápido y confiable.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 0;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        main {
+            background: white;
+            border-radius: 20px;
+            margin-top: -50px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .section {
+            padding: 60px 40px;
+        }
+
+        .section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #34495e;
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'bash';
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #4a5568;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .code-block code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .endpoint {
+            background: #e8f5e8;
+            border: 1px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .endpoint-method {
+            background: #4CAF50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .endpoint-url {
+            font-family: monospace;
+            background: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .response-example {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .tab-container {
+            margin: 30px 0;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .footer-links {
+            margin-bottom: 20px;
+        }
+
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .section {
+                padding: 40px 20px;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 OCR API</h1>
+            <p class="subtitle">Servicio de Reconocimiento Óptico de Caracteres</p>
+            <p>Extrae texto de imágenes de forma rápida y precisa</p>
+            <div class="hero-buttons">
+                <a href="#endpoints" class="btn btn-primary">Ver Documentación</a>
+                <a href="#examples" class="btn">Ejemplos de Uso</a>
+                <a href="https://github.com/alvarogallo/node_ocr_2025" class="btn" target="_blank">GitHub</a>
+            </div>
+        </header>
+
+        <main>
+            <section class="section">
+                <h2>🚀 Características</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">⚡</span>
+                        <h3>Rápido y Eficiente</h3>
+                        <p>Procesamiento optimizado con Tesseract.js para obtener resultados en segundos.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🌐</span>
+                        <h3>Múltiples Idiomas</h3>
+                        <p>Soporte para español, inglés, francés, alemán y combinaciones de idiomas.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🔒</span>
+                        <h3>Seguro</h3>
+                        <p>Autenticación por token y limpieza automática de archivos temporales.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">📊</span>
+                        <h3>Estadísticas Detalladas</h3>
+                        <p>Obtén métricas de confianza, palabras detectadas, líneas y párrafos.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🖼️</span>
+                        <h3>Formatos Múltiples</h3>
+                        <p>Compatible con JPG, PNG, GIF, BMP, WebP y TIFF hasta 10MB.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">⚙️</span>
+                        <h3>Configurable</h3>
+                        <p>Modos de segmentación avanzados y filtros de caracteres personalizables.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="status">
+                <h2>📡 Estado del Servicio</h2>
+                <div style="text-align: center; padding: 20px;">
+                    <p><span class="status-indicator"></span><strong>API Operativa</strong></p>
+                    <p>Último check: <span id="last-check">Verificando...</span></p>
+                </div>
+            </section>
+
+            <section class="section" id="endpoints">
+                <h2>📋 Endpoints de la API</h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-method">GET</div>
+                    <h3>Información del Servicio</h3>
+                    <div class="endpoint-url">https://ocr.unatecla.us/</div>
+                    <p>Obtiene información básica del servicio y endpoints disponibles.</p>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-method">POST</div>
+                    <h3>Extracción Básica de Texto</h3>
+                    <div class="endpoint-url">https://ocr.unatecla.us/extract-text</div>
+                    <p><strong>Requiere autenticación</strong> - Extrae texto de una imagen con configuración por defecto.</p>
+                    <h4>Parámetros:</h4>
+                    <ul>
+                        <li><code>image</code> (file): Archivo de imagen</li>
+                        <li><code>Authorization</code> (header): Bearer TOKEN</li>
+                    </ul>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-method">POST</div>
+                    <h3>Extracción Avanzada de Texto</h3>
+                    <div class="endpoint-url">https://ocr.unatecla.us/extract-text-advanced</div>
+                    <p><strong>Requiere autenticación</strong> - Extrae texto con opciones de configuración avanzadas.</p>
+                    <h4>Parámetros:</h4>
+                    <ul>
+                        <li><code>image</code> (file): Archivo de imagen</li>
+                        <li><code>language</code> (string, opcional): Idiomas (ej: "spa+eng")</li>
+                        <li><code>psm</code> (string, opcional): Modo de segmentación (6 por defecto)</li>
+                        <li><code>whitelist</code> (string, opcional): Caracteres permitidos</li>
+                        <li><code>Authorization</code> (header): Bearer TOKEN</li>
+                    </ul>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-method">GET</div>
+                    <h3>Validar Token</h3>
+                    <div class="endpoint-url">https://ocr.unatecla.us/validate-token</div>
+                    <p><strong>Requiere autenticación</strong> - Verifica si un token es válido.</p>
+                </div>
+            </section>
+
+            <section class="section" id="examples">
+                <h2>💻 Ejemplos de Uso</h2>
+
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-button active" onclick="showTab('curl')">cURL</button>
+                        <button class="tab-button" onclick="showTab('javascript')">JavaScript</button>
+                        <button class="tab-button" onclick="showTab('python')">Python</button>
+                        <button class="tab-button" onclick="showTab('php')">PHP</button>
+                    </div>
+
+                    <div id="curl" class="tab-content active">
+                        <h3>Usando cURL</h3>
+                        <div class="code-block">
+                            <code># Extracción básica
+curl -X POST \
+     -H "Authorization: Bearer TU_TOKEN_AQUI" \
+     -F "image=@imagen.jpg" \
+     https://ocr.unatecla.us/extract-text
+
+# Extracción avanzada
+curl -X POST \
+     -H "Authorization: Bearer TU_TOKEN_AQUI" \
+     -F "image=@imagen.jpg" \
+     -F "language=spa+eng" \
+     -F "psm=6" \
+     https://ocr.unatecla.us/extract-text-advanced</code>
+                        </div>
+                    </div>
+
+                    <div id="javascript" class="tab-content">
+                        <h3>Usando JavaScript (Fetch)</h3>
+                        <div class="code-block">
+                            <code>async function extractText(imageFile, token) {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('language', 'spa+eng');
+    
+    try {
+        const response = await fetch('https://ocr.unatecla.us/extract-text-advanced', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            console.log('Texto:', result.text);
+            console.log('Confianza:', result.confidence);
+            return result;
+        } else {
+            console.error('Error:', result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}</code>
+                        </div>
+                    </div>
+
+                    <div id="python" class="tab-content">
+                        <h3>Usando Python (requests)</h3>
+                        <div class="code-block">
+                            <code>import requests
+
+def extract_text(image_path, token):
+    url = 'https://ocr.unatecla.us/extract-text-advanced'
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    with open(image_path, 'rb') as image_file:
+        files = {'image': image_file}
+        data = {
+            'language': 'spa+eng',
+            'psm': '6'
+        }
+        
+        response = requests.post(url, headers=headers, files=files, data=data)
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"Texto: {result['text']}")
+            print(f"Confianza: {result['confidence']}%")
+            return result
+        else:
+            print(f"Error: {response.json()}")
+
+# Uso
+token = 'TU_TOKEN_AQUI'
+result = extract_text('imagen.jpg', token)</code>
+                        </div>
+                    </div>
+
+                    <div id="php" class="tab-content">
+                        <h3>Usando PHP (cURL)</h3>
+                        <div class="code-block">
+                            <code><?php
+function extractText($imagePath, $token) {
+    $url = 'https://ocr.unatecla.us/extract-text-advanced';
+    
+    $postData = [
+        'image' => new CURLFile($imagePath),
+        'language' => 'spa+eng',
+        'psm' => '6'
+    ];
+    
+    $headers = [
+        'Authorization: Bearer ' . $token
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200) {
+        $result = json_decode($response, true);
+        echo "Texto: " . $result['text'] . "\n";
+        echo "Confianza: " . $result['confidence'] . "%\n";
+        return $result;
+    } else {
+        echo "Error: " . $response . "\n";
+    }
+}
+
+// Uso
+$token = 'TU_TOKEN_AQUI';
+$result = extractText('imagen.jpg', $token);
+?></code>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Respuesta de la API</h3>
+                <div class="response-example">
+                    <h4>Éxito (200):</h4>
+                    <div class="code-block">
+                        <code>{
+  "success": true,
+  "text": "Texto extraído de la imagen",
+  "confidence": 85.6,
+  "words": 15,
+  "lines": 3,
+  "paragraphs": 1,
+  "metadata": {
+    "language": "spa+eng",
+    "psm": "6",
+    "originalFilename": "imagen.jpg",
+    "fileSize": 1024000
+  }
+}</code>
+                    </div>
+                </div>
+
+                <div class="response-example">
+                    <h4>Error de autenticación (401):</h4>
+                    <div class="code-block">
+                        <code>{
+  "error": "Token de acceso requerido",
+  "message": "Envía el token en el header Authorization: Bearer TOKEN"
+}</code>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>⚙️ Configuración</h2>
+                
+                <h3>Idiomas Soportados</h3>
+                <ul>
+                    <li><code>spa</code> - Español</li>
+                    <li><code>eng</code> - Inglés</li>
+                    <li><code>fra</code> - Francés</li>
+                    <li><code>deu</code> - Alemán</li>
+                    <li><code>spa+eng</code> - Español + Inglés (recomendado)</li>
+                </ul>
+
+                <h3>Modos de Segmentación (PSM)</h3>
+                <ul>
+                    <li><code>6</code> - Bloque uniforme de texto (por defecto)</li>
+                    <li><code>7</code> - Una sola línea de texto</li>
+                    <li><code>8</code> - Una sola palabra</li>
+                    <li><code>13</code> - Línea cruda</li>
+                </ul>
+
+                <h3>Límites</h3>
+                <ul>
+                    <li>Tamaño máximo: 10MB por imagen</li>
+                    <li>Formatos: JPG, PNG, GIF, BMP, WebP, TIFF</li>
+                    <li>Rate limiting: Aplicado por token</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>🔐 Obtener Token de Acceso</h2>
+                <p>Para obtener un token de acceso a la API, contacta al administrador del servicio o envía un email a:</p>
+                <p style="text-align: center; font-size: 1.2rem; margin: 20px 0;">
+                    <strong>admin@unatecla.us</strong>
+                </p>
+                <p>En tu solicitud incluye:</p>
+                <ul>
+                    <li>Propósito de uso de la API</li>
+                    <li>Volumen estimado de requests</li>
+                    <li>Información de contacto</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-links">
+                <a href="mailto:admin@unatecla.us">Contacto</a>
+                <a href="https://github.com/alvarogallo/node_ocr_2025" target="_blank">GitHub</a>
+                <a href="#endpoints">Documentación</a>
+            </div>
+            <p>&copy; 2025 OCR API - Una Tecla. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Ocultar todas las pestañas
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remover clase active de todos los botones
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            // Mostrar la pestaña seleccionada
+            document.getElementById(tabName).classList.add('active');
+            
+            // Activar el botón correspondiente
+            event.target.classList.add('active');
+        }
+
+        // Verificar estado del servicio
+        async function checkServiceStatus() {
+            try {
+                const response = await fetch('https://ocr.unatecla.us/');
+                if (response.ok) {
+                    document.getElementById('last-check').textContent = new Date().toLocaleString();
+                }
+            } catch (error) {
+                document.getElementById('last-check').textContent = 'Error al verificar';
+            }
+        }
+
+        // Verificar estado al cargar la página
+        checkServiceStatus();
+        
+        // Verificar estado cada 5 minutos
+        setInterval(checkServiceStatus, 300000);
+
+        // Smooth scroll para enlaces internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

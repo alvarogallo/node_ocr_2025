@@ -13,7 +13,9 @@ const API_TOKEN = process.env.API_TOKEN;
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); // Servir archivos estáticos
+
+// Servir archivos estáticos (incluyendo index.html)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware de autenticación
 const authenticateToken = (req, res, next) => {
@@ -72,25 +74,28 @@ const upload = multer({
   }
 });
 
-// Ruta principal
-app.get('/', (req, res) => {
+// Ruta API para información del servicio
+app.get('/api', (req, res) => {
   res.json({
     message: 'Servicio OCR con Tesseract.js',
     version: '1.0.0',
     authentication: 'Requerida para endpoints de procesamiento',
     endpoints: {
-      'GET /': 'Información del servicio (público)',
+      'GET /': 'Página de documentación',
+      'GET /api': 'Información del servicio (público)',
       'POST /extract-text': 'Extrae texto de una imagen (requiere token)',
-      'POST /extract-text-advanced': 'Extrae texto con opciones avanzadas (requiere token)'
+      'POST /extract-text-advanced': 'Extrae texto con opciones avanzadas (requiere token)',
+      'GET /validate-token': 'Validar token (requiere token)'
     },
     usage: {
       'header': 'Authorization: Bearer YOUR_TOKEN',
       'query': '?token=YOUR_TOKEN'
-    }
+    },
+    contact: 'admin@unatecla.us'
   });
 });
 
-// Nuevo endpoint para validar token
+// Endpoint para validar token
 app.get('/validate-token', authenticateToken, (req, res) => {
   res.json({
     valid: true,
@@ -111,9 +116,9 @@ app.post('/extract-text', authenticateToken, upload.single('image'), async (req,
     // Procesar imagen con Tesseract
     const result = await Tesseract.recognize(
       req.file.path,
-      'spa+eng', // Español e inglés
+      process.env.DEFAULT_LANGUAGE || 'spa+eng',
       {
-        logger: m => console.log(m) // Log del progreso
+        logger: m => console.log(m)
       }
     );
 
@@ -150,7 +155,7 @@ app.post('/extract-text-advanced', authenticateToken, upload.single('image'), as
       return res.status(400).json({ error: 'No se proporcionó ninguna imagen' });
     }
 
-    const { language = 'spa+eng', psm = '6' } = req.body;
+    const { language = process.env.DEFAULT_LANGUAGE || 'spa+eng', psm = process.env.DEFAULT_PSM || '6' } = req.body;
 
     console.log(`Procesando imagen avanzada: ${req.file.filename}`);
 
@@ -216,4 +221,6 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor OCR ejecutándose en http://localhost:${PORT}`);
   console.log(`📁 Directorio de uploads: ${path.resolve('uploads')}`);
+  console.log(`🌐 Página principal: http://localhost:${PORT}`);
+  console.log(`📡 API info: http://localhost:${PORT}/api`);
 });
