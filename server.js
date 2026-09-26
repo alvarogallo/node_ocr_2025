@@ -4,11 +4,15 @@ const Tesseract = require('tesseract.js');
 const cors = require('cors');
 const fs = require('fs-extra');
 const path = require('path');
+const os = require('os');
 require('dotenv').config();
+const { createAdminRouter } = require('./admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_TOKEN = process.env.API_TOKEN;
+// Directorio temporal para las imágenes (se borran tras el OCR); /tmp siempre es escribible en el contenedor
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(os.tmpdir(), 'ocr-uploads');
 
 // Middlewares
 app.use(cors());
@@ -46,9 +50,8 @@ const authenticateToken = (req, res, next) => {
 // Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadsDir = 'uploads';
-    fs.ensureDirSync(uploadsDir);
-    cb(null, uploadsDir);
+    fs.ensureDirSync(UPLOADS_DIR);
+    cb(null, UPLOADS_DIR);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -202,6 +205,9 @@ app.post('/extract-text-advanced', authenticateToken, upload.single('image'), as
   }
 });
 
+// Página de administración (requiere login con la API central)
+app.use('/alvarogallo', createAdminRouter({ uploadsDir: UPLOADS_DIR }));
+
 // Manejo de errores de multer
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -214,13 +220,14 @@ app.use((error, req, res, next) => {
     return res.status(400).json({ error: error.message });
   }
 
+  console.error(`Error en ${req.method} ${req.originalUrl}:`, error);
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
 // Iniciar servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor OCR ejecutándose en http://localhost:${PORT}`);
-  console.log(`📁 Directorio de uploads: ${path.resolve('uploads')}`);
+  console.log(`📁 Directorio de uploads: ${UPLOADS_DIR}`);
   console.log(`🌐 Página principal: http://localhost:${PORT}`);
   console.log(`📡 API info: http://localhost:${PORT}/api`);
 });
